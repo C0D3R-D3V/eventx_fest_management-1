@@ -2,97 +2,40 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
-
-const formSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-  phone: z.string().min(10, "Please enter a valid phone number"),
-  college: z.string().min(2, "College name must be at least 2 characters"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-})
+import { registerUser } from "@/app/actions/auth"
+import { useToast } from "@/hooks/use-toast"
 
 export default function RegisterPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      phone: "",
-      college: "",
-    },
-  })
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setIsLoading(true)
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      setIsLoading(true)
-      
-      // Check if user already exists
-      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]')
-      const userExists = existingUsers.some((user: any) => user.email === values.email)
-      
-      if (userExists) {
+      const formData = new FormData(event.currentTarget)
+      const result = await registerUser(formData)
+
+      if (result.success) {
+        toast({
+          title: "Registration successful",
+          description: "You can now log in with your credentials",
+        })
+        router.push("/auth/login")
+      } else {
         toast({
           title: "Registration failed",
-          description: "A user with this email already exists.",
+          description: result.error,
           variant: "destructive",
         })
-        return
       }
-
-      // Create user data object
-      const userData = {
-        ...values,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-      }
-
-      // Remove confirmPassword from stored data
-      delete userData.confirmPassword
-
-      // Store in localStorage
-      existingUsers.push(userData)
-      localStorage.setItem('users', JSON.stringify(existingUsers))
-
-      toast({
-        title: "Registration successful!",
-        description: "You can now log in with your credentials.",
-      })
-
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        router.push('/auth/login')
-      }, 2000)
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Something went wrong",
+        description: "Please try again later",
         variant: "destructive",
       })
     } finally {
@@ -101,113 +44,88 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="container max-w-lg py-10">
-      <Card>
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
-          <CardDescription>
-            Register to access all FestX features and events
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="fullName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="john@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Must be at least 8 characters long
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input type="tel" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="college"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>College Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="space-y-4">
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Create account"}
-                </Button>
-                <div className="text-center text-sm">
-                  Already have an account?{" "}
-                  <Link href="/auth/login" className="text-primary hover:underline">
-                    Login here
-                  </Link>
-                </div>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+    <div className="max-w-[600px] mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-2">Register for FestX Events</h1>
+      <p className="text-gray-600 mb-6">
+        Fill in the details below to register for your favorite events.
+      </p>
+
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div>
+          <label className="block font-medium mb-1">Full Name</label>
+          <input
+            name="fullName"
+            type="text"
+            placeholder="Your full name"
+            required
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block font-medium mb-1">Email</label>
+            <input
+              name="email"
+              type="email"
+              placeholder="youremail@example.com"
+              required
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">Phone Number</label>
+            <input
+              name="phoneNumber"
+              type="tel"
+              placeholder="Your contact number"
+              required
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Password</label>
+          <input
+            name="password"
+            type="password"
+            placeholder="Create a password"
+            required
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">College/University</label>
+          <input
+            name="college"
+            type="text"
+            placeholder="Your college or university name"
+            required
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none"
+          />
+        </div>
+
+        <div className="flex justify-end mt-6">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+
+        <div className="text-center text-sm mt-4">
+          Already have an account?{" "}
+          <Link href="/auth/login" className="text-blue-600 hover:underline">
+            Login
+          </Link>
+        </div>
+      </form>
     </div>
   )
-} 
+}
+
