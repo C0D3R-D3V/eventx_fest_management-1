@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -77,19 +77,35 @@ const quizData = {
   passingScore: 60,
 }
 
-export default function QuizPage({ params }) {
-  const { quizId } = params
+interface QuizParams {
+  quizId: string;
+}
+
+interface QuizResults {
+  score: number;
+  correctAnswers: number;
+  totalQuestions: number;
+  passed: boolean;
+}
+
+interface SelectedAnswers {
+  [key: number]: string;
+}
+
+export default function QuizPage({ params }: { params: Promise<QuizParams> }) {
+  const parameters = use(params)
+  const { quizId } = parameters
   const { toast } = useToast()
 
   // In a real application, fetch quiz data based on quizId
   const quiz = quizData // Simulating fetched data
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState({})
+  const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswers>({})
   const [quizStarted, setQuizStarted] = useState(false)
   const [quizCompleted, setQuizCompleted] = useState(false)
   const [timeLeft, setTimeLeft] = useState(quiz.duration)
-  const [results, setResults] = useState(null)
+  const [results, setResults] = useState<QuizResults | null>(null)
 
   // Timer functionality
   useEffect(() => {
@@ -130,7 +146,7 @@ export default function QuizPage({ params }) {
     }
   }
 
-  const handleSelectAnswer = (questionId, optionId) => {
+  const handleSelectAnswer = (questionId: number, optionId: string) => {
     setSelectedAnswers((prev) => ({
       ...prev,
       [questionId]: optionId,
@@ -175,7 +191,7 @@ export default function QuizPage({ params }) {
     })
   }
 
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, "0")}`
@@ -183,7 +199,7 @@ export default function QuizPage({ params }) {
 
   const progressPercentage = ((currentQuestion + 1) / quiz.questions.length) * 100
 
-  if (quizCompleted) {
+  if (quizCompleted && results) {
     return (
       <div className="container max-w-3xl py-10">
         <Card>

@@ -72,7 +72,7 @@ export function FloatingAnnouncement({
           color: hsl(var(--primary-foreground));
           padding: 8px 0;
           overflow: hidden;
-          z-index: 900;
+          z-index: 40;
           box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
@@ -98,6 +98,30 @@ export function FloatingAnnouncement({
             top: 56px;
           }
         }
+
+        .floating-alert {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background-color: white;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          z-index: 45;
+          max-width: 400px;
+          width: 90%;
+        }
+
+        .floating-alert-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(0, 0, 0, 0.5);
+          z-index: 44;
+        }
       `}</style>
 
       <div className="announcements-ticker">
@@ -108,11 +132,40 @@ export function FloatingAnnouncement({
         </div>
       </div>
 
-      {/* Floating announcement */}
+      {/* Center Floating Alert */}
+      {!isClosed && (
+        <>
+          <div className="floating-alert-overlay" onClick={handleClose} />
+          <div className="floating-alert">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Early Bird Offer! 🎉</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Get 15% off on all ticket types with code <span className="font-bold">EARLY15</span>
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleClose}
+                className="h-6 w-6 -mt-1 -mr-1"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
+            <Button className="w-full" asChild>
+              <Link href="/tickets/buy">Buy tickets now</Link>
+            </Button>
+          </div>
+        </>
+      )}
+
+      {/* Bottom Floating announcement */}
       {!isClosed && (
         <div
           className={cn(
-            "fixed bottom-4 left-1/2 -translate-x-1/2 z-[901] max-w-md w-full px-4 transition-all duration-300 ease-in-out",
+            "fixed bottom-4 left-1/2 -translate-x-1/2 z-40 max-w-md w-full px-4 transition-all duration-300 ease-in-out",
             isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
           )}
         >

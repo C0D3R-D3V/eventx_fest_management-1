@@ -1,93 +1,3 @@
-// "use client"
-
-// import Link from "next/link"
-// import { Button } from "@/components/ui/button"
-// import { ModeToggle } from "@/components/mode-toggle"
-// import { usePathname } from "next/navigation"
-// import { useState } from "react"
-// import { Menu, X, Bell } from "lucide-react"
-// import { cn } from "@/lib/utils"
-
-// export default function Navbar() {
-//   const pathname = usePathname()
-//   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-//   const routes = [
-//     { href: "/", label: "Home" },
-//     { href: "/events", label: "Events" },
-//     { href: "/quizzes", label: "Quizzes" },
-//     { href: "/dashboard", label: "Dashboard" },
-//     { href: "/about", label: "About" },
-//   ]
-
-//   return (
-//     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-//       <div className="container flex h-16 items-center">
-//         <div className="mr-4 flex">
-//           <Link href="/" className="flex items-center space-x-2">
-//             <span className="font-bold text-xl">FestX</span>
-//           </Link>
-//         </div>
-//         <div className="flex flex-1 items-center justify-end space-x-2 md:justify-between">
-//           <nav className="hidden md:flex items-center space-x-6">
-//             {routes.map((route) => (
-//               <Link
-//                 key={route.href}
-//                 href={route.href}
-//                 className={cn(
-//                   "text-sm font-medium transition-colors hover:text-primary",
-//                   pathname === route.href ? "text-foreground" : "text-muted-foreground",
-//                 )}
-//               >
-//                 {route.label}
-//               </Link>
-//             ))}
-//           </nav>
-//           <div className="flex items-center space-x-4">
-//             <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-//               <Bell className="h-5 w-5" />
-//               <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"></span>
-//             </Button>
-//             <ModeToggle />
-//             <Button className="hidden md:flex" asChild>
-//               <Link href="/register">Register</Link>
-//             </Button>
-//             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-//               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-//             </Button>
-//           </div>
-//         </div>
-//       </div>
-//       {/* Mobile menu */}
-//       {isMenuOpen && (
-//         <div className="md:hidden border-t">
-//           <div className="container py-4 grid gap-4">
-//             {routes.map((route) => (
-//               <Link
-//                 key={route.href}
-//                 href={route.href}
-//                 className={cn(
-//                   "text-sm font-medium transition-colors hover:text-primary",
-//                   pathname === route.href ? "text-foreground" : "text-muted-foreground",
-//                 )}
-//                 onClick={() => setIsMenuOpen(false)}
-//               >
-//                 {route.label}
-//               </Link>
-//             ))}
-//             <Button className="mt-2" asChild>
-//               <Link href="/register" onClick={() => setIsMenuOpen(false)}>
-//                 Register
-//               </Link>
-//             </Button>
-//           </div>
-//         </div>
-//       )}
-//     </header>
-//   )
-// }
-
-
 "use client"
 
 import Link from "next/link"
@@ -130,10 +40,22 @@ export default function Navbar() {
   ])
   const { toast } = useToast()
 
+  useEffect(() => {
+    const user = localStorage.getItem('currentUser')
+    setIsLoggedIn(!!user)
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser')
+    setIsLoggedIn(false)
+    window.location.href = '/'
+  }
+
   const routes = [
     { href: "/", label: "Home" },
     { href: "/events", label: "Events" },
     { href: "/quizzes", label: "Quizzes" },
+    ...(isLoggedIn ? [{ href: "/dashboard", label: "Dashboard" }] : []),
   ]
 
   const unreadNotifications = notifications.filter(n => !n.read).length
@@ -157,14 +79,6 @@ export default function Navbar() {
       description: "Welcome back to FestX!",
     });
   };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false)
-    toast({
-      title: "Logged out successfully",
-      description: "See you soon!",
-    })
-  }
 
   const markAllAsRead = () => {
     setNotifications(notifications.map(n => ({ ...n, read: true })))
